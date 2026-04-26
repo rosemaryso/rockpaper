@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가위바위보 게임</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial; text-align: center; background:#f5f5f5; color:#222; }
+.dark { background:#121212; color:#eee; }
+button { padding:10px 15px; margin:5px; cursor:pointer; }
+.top-right { position: fixed; top:10px; right:10px; }
+.hidden { display:none; }
+#result { font-size:20px; margin-top:20px; }
+#celebrate { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<div class="top-right">
+<button onclick="toggleDark()">🌙</button>
+<button onclick="toggleStats()">📊</button>
+</div>
+
+<h1>가위 ✊ 바위 ✋ 보 ✌</h1>
+
+<div>
+<button onclick="play('rock')">바위</button>
+<button onclick="play('paper')">보</button>
+<button onclick="play('scissors')">가위</button>
+</div>
+
+<h2 id="score">0 : 0</h2>
+<div id="result"></div>
+
+<canvas id="celebrate"></canvas>
+
+<div id="stats" class="hidden">
+<h3>승률 테이블</h3>
+<table border="1" style="margin:auto;">
+<thead><tr><th>판수</th><th>승</th><th>패</th><th>무</th></tr></thead>
+<tbody id="statBody"></tbody>
+</table>
+<canvas id="chart" width="400" height="200"></canvas>
+</div>
+
+<script>
+let user=0, comp=0;
+let history=[];
+let ctxChart, chart;
+
+function play(choice){
+  const options=['rock','paper','scissors'];
+  const ai=options[Math.floor(Math.random()*3)];
+
+  let result='';
+  if(choice===ai) result='draw';
+  else if(
+    (choice==='rock'&&ai==='scissors')||
+    (choice==='paper'&&ai==='rock')||
+    (choice==='scissors'&&ai==='paper')
+  ){
+    result='win'; user++;
+  } else { result='lose'; comp++; }
+
+  history.push({win:user, lose:comp});
+
+  document.getElementById('score').innerText=`${user} : ${comp}`;
+  document.getElementById('result').innerText=`컴퓨터: ${ai} → ${result}`;
+
+  updateStats();
+
+  if(user===3 || comp===3){
+    if(user===3) celebrate();
+    else alert('아쉽네요 😢 다시 도전!');
+    resetGame();
+  }
+}
+
+function resetGame(){ user=0; comp=0; history=[]; updateStats(); }
+
+function toggleDark(){ document.body.classList.toggle('dark'); }
+
+function toggleStats(){
+  const s=document.getElementById('stats');
+  s.classList.toggle('hidden');
+}
+
+function updateStats(){
+  const body=document.getElementById('statBody');
+  body.innerHTML='';
+  history.forEach((h,i)=>{
+    body.innerHTML+=`<tr><td>${i+1}</td><td>${h.win}</td><td>${h.lose}</td><td>${i+1-h.win-h.lose}</td></tr>`;
+  });
+
+  const labels=history.map((_,i)=>i+1);
+  const wins=history.map(h=>h.win);
+
+  if(chart) chart.destroy();
+  ctxChart=document.getElementById('chart');
+  chart=new Chart(ctxChart,{
+    type:'line',
+    data:{ labels:labels, datasets:[{ label:'승', data:wins }] },
+  });
+}
+
+function celebrate(){
+  const canvas=document.getElementById('celebrate');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+
+  for(let i=0;i<200;i++){
+    ctx.fillStyle=`hsl(${Math.random()*360},100%,50%)`;
+    ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height,5,5);
+  }
+  alert('🎉 축하합니다! 승리!');
+}
+</script>
+
+</body>
+</html>
